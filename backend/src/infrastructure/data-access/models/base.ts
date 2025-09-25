@@ -14,28 +14,26 @@ export class BaseModel {
   id?: string;
 
   @Index()
-  @CreateDateColumn({ name: 'audit_created_date_time' })
+  @CreateDateColumn()
   auditCreatedDateTime: string;
 
-  @Column({ name: 'audit_created_by', type: 'varchar', length: 50 })
+  @Column({ type: 'varchar', length: 50 })
   auditCreatedBy: string;
 
-  @UpdateDateColumn({ name: 'audit_modified_date_time' })
+  @UpdateDateColumn()
   auditModifiedDateTime?: string;
 
   @Column({
-    name: 'audit_modified_by',
     type: 'varchar',
     length: 128,
     nullable: true,
   })
   auditModifiedBy?: string;
 
-  @DeleteDateColumn({ name: 'audit_delete_date_time' })
+  @DeleteDateColumn()
   auditDeletedDateTime?: string;
 
   @Column({
-    name: 'audit_delete_by',
     type: 'varchar',
     length: 128,
     nullable: true,
