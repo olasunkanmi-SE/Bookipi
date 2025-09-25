@@ -7,16 +7,16 @@ import {
   Param,
   Delete,
 } from '@nestjs/common';
-import { FashSalesService } from './fash-sales.service';
-import { CreateFashSaleDto } from './dto/create-fash-sale.dto';
-import { UpdateFashSaleDto } from './dto/update-fash-sale.dto';
+import { FlashSalesService } from './flash-sales.service';
+import { CreateFlashSaleDto } from './dto/create-flash-sale.dto';
+import { UpdateFlashSaleDto } from './dto/update-flash-sale.dto';
 
-@Controller('fash-sales')
-export class FashSalesController {
-  constructor(private readonly fashSalesService: FashSalesService) {}
+@Controller('flash-sales')
+export class FlashSalesController {
+  constructor(private readonly fashSalesService: FlashSalesService) {}
 
   @Post()
-  create(@Body() createFashSaleDto: CreateFashSaleDto) {
+  create(@Body() createFashSaleDto: CreateFlashSaleDto) {
     return this.fashSalesService.create(createFashSaleDto);
   }
 
@@ -33,7 +33,7 @@ export class FashSalesController {
   @Patch(':id')
   update(
     @Param('id') id: string,
-    @Body() updateFashSaleDto: UpdateFashSaleDto,
+    @Body() updateFashSaleDto: UpdateFlashSaleDto,
   ) {
     return this.fashSalesService.update(+id, updateFashSaleDto);
   }

@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
-import { FashSalesService } from './fash-sales.service';
-import { FashSalesController } from './fash-sales.controller';
+
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { FlashSale } from '../infrastructure/data-access/models/flash-sales.entity';
+import { FlashSalesController } from './flash-sales.controller';
+import { FlashSalesService } from './flash-sales.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([FlashSale])],
-  controllers: [FashSalesController],
-  providers: [FashSalesService],
+  controllers: [FlashSalesController],
+  providers: [FlashSalesService],
 })
-export class FashSalesModule {}
+export class FlashSalesModule {}

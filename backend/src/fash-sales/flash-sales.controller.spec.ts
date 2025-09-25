@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { FashSalesController } from './fash-sales.controller';
-import { FashSalesService } from './fash-sales.service';
+import { FashSalesController } from './flash-sales.controller';
+import { FashSalesService } from './flash-sales.service';
 
 describe('FashSalesController', () => {
   let controller: FashSalesController;
