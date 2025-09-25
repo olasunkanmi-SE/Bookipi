@@ -1,4 +1,4 @@
-version: "3.8"
+
 services:
   postgres:
     image: postgres:latest
@@ -6,7 +6,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres3
-      POSTGRES_DB: AIITOUCH
+      POSTGRES_DB: BOOKIPI
     volumes:
       - ./apps/api/pgdata:/postgres/data
     ports:
@@ -25,10 +25,10 @@ services:
         "--loglevel",
         "warning",
         "--requirepass",
-        "${REDIS_PASSWORD}",
+        "eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81",
       ]
     environment:
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_PASSWORD=eYVX7EwVmmxKPCDmwMtyKVge8oLd2t81
     volumes:
       - cache:/data
 volumes:
