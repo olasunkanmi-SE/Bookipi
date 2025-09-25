@@ -1,0 +1,36 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres3
+      POSTGRES_DB: AIITOUCH
+    volumes:
+      - ./apps/api/pgdata:/postgres/data
+    ports:
+      - 35000:5432
+  cache:
+    image: redis:latest
+    restart: always
+    ports:
+      - "6379:6379"
+    command:
+      [
+        "redis-server",
+        "--save",
+        "20",
+        "1",
+        "--loglevel",
+        "warning",
+        "--requirepass",
+        "${REDIS_PASSWORD}",
+      ]
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    volumes:
+      - cache:/data
+volumes:
+  cache:
+    driver: local
