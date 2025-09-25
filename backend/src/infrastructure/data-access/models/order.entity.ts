@@ -1,15 +1,19 @@
-import { OrderStatus } from 'src/common/constants';
-import { Column, Entity, Unique } from 'typeorm';
+import { OrderStatus } from '../../../common/constants';
+import { Column, Entity, Index, Unique } from 'typeorm';
+import { BaseModel } from './base';
 
 @Entity('orders')
 @Unique(['userId', 'productId']) // Enforces one item per user per product at the database level
-export class Order {
+export class Order extends BaseModel {
+  @Index()
   @Column()
   userId: string;
 
+  @Index()
   @Column()
   productId: string;
 
+  @Index()
   @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.PENDING })
   status: OrderStatus;
 }
