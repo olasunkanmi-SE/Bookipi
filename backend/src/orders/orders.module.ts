@@ -1,17 +1,18 @@
+import { BullModule } from '@nestjs/bull';
 import { Module } from '@nestjs/common';
-import { OrdersService } from './orders.service';
-import { OrdersController } from './orders.controller';
+import { JwtService } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Order } from '../infrastructure/data-access/models/order.entity';
+import { ORDER_PROCESSING } from 'src/common/constants';
 import { Product } from 'src/infrastructure/data-access/models/product.entity';
 import { User } from 'src/infrastructure/data-access/models/user.entity';
-import { JwtService } from '@nestjs/jwt';
-import { BullModule } from '@nestjs/bullmq';
+import { Order } from '../infrastructure/data-access/models/order.entity';
+import { OrdersController } from './orders.controller';
+import { OrdersService } from './orders.service';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Order, Product, User]),
-    BullModule.registerQueue({ name: 'order-processing' }),
+    BullModule.registerQueue({ name: ORDER_PROCESSING }),
   ],
   controllers: [OrdersController],
   providers: [OrdersService, JwtService],

@@ -1,31 +1,29 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-import { HttpStatus, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Audit } from 'src/common/audit';
-import { throwApplicationError } from 'src/common/exception.instance';
+import { TYPES } from 'src/common/constants';
 import { Result } from 'src/common/result';
 import { logError } from 'src/common/utils';
+import { IRedisService } from 'src/infrastructure/cache/redis.service';
 import { Product } from 'src/infrastructure/data-access/models/product.entity';
 import { Repository } from 'typeorm';
 import { CreateProductDto } from './dto/create-product.dto';
-
-export interface ICreateProductResponseDTO {
-  id: string;
-  name: string;
-  stock: number;
-  price: number;
-  auditCreatedBy: string;
-  auditCreatedDateTime: string;
-}
+import {
+  ICreateProductResponseDTO,
+  IProductService,
+} from './interface/product';
 
 @Injectable()
-export class ProductsService {
+export class ProductsService implements IProductService {
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
+    @Inject(TYPES.IRedisService) private readonly cacheService: IRedisService,
   ) {}
 
-  async create(createProductDto: CreateProductDto) {
+  async create(
+    createProductDto: CreateProductDto,
+  ): Promise<Result<ICreateProductResponseDTO>> {
     const { name, stock, price } = createProductDto;
 
     const audit = Audit.create({
@@ -42,10 +40,7 @@ export class ProductsService {
     const result = await this.productRepository.save(product);
 
     if (!result) {
-      throwApplicationError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        'Error while creating product',
-      );
+      throw new Error('Error while creating product');
     }
 
     return Result.ok({
@@ -58,15 +53,21 @@ export class ProductsService {
     });
   }
 
-  async findAll() {
+  async findAll(): Promise<Product[]> {
     return await this.productRepository.find({});
   }
 
-  async findOne(id: string) {
+  async findOne(id: string): Promise<Product> {
+    const cacheKey = this.getCacheKey(id);
+    const cachedProduct = (await this.cacheService.get(cacheKey)) as Product;
+    if (cachedProduct) {
+      return cachedProduct;
+    }
     const product = await this.productRepository.findOne({ where: { id } });
     if (!product) {
-      throwApplicationError(HttpStatus.NOT_FOUND, 'Product does not exist');
+      throw new Error('Product does not exist');
     }
+    await this.cacheService.set(cacheKey, product, 36000);
     return product;
   }
 
@@ -99,5 +100,23 @@ export class ProductsService {
       logError(error, ProductsService.name);
       throw error;
     }
+  }
+
+  async handlePurchaseAttempt(
+    productId: string,
+    userId: string,
+  ): Promise<Result<null> | Result<string>> {
+    const decrementStock = await this.decrementStock(productId);
+    if (!decrementStock) {
+      Logger.warn(
+        `Purchase failed for user ${userId}, product ${productId}. Out of stock.`,
+      );
+      return Result.fail('Sorry, this item is now out of stock!');
+    }
+    return Result.ok('true');
+  }
+
+  private getCacheKey(productId: string): string {
+    return `product:${productId}`;
   }
 }

@@ -4,4 +4,7 @@ export class CreateOrderDto {
   @IsString()
   @IsNotEmpty()
   productId: string;
+
+  @IsString()
+  idempotencyKey: string;
 }

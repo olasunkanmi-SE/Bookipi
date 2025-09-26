@@ -10,7 +10,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { FlashSalesModule } from './fash-sales/fash-sales.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ENV } from './common/constants';
-import { BullModule } from '@nestjs/bullmq';
+import { BullModule } from '@nestjs/bull';
 import * as Joi from 'joi';
 
 @Module({
@@ -39,7 +39,7 @@ import * as Joi from 'joi';
     BullModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
-        connection: {
+        redis: {
           host: configService.get<string>('REDIS_HOST'),
           port: configService.get<number>('REDIS_PORT'),
           password: configService.get<string>('REDIS_PASSWORD'),
