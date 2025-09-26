@@ -48,7 +48,7 @@ export class UsersService {
       const hash: string = await this.authService.hashPassword(password);
       const audit = Audit.create({
         auditCreatedBy: username,
-        auditCreatedDateTime: new Date().toString(),
+        auditCreatedDateTime: new Date().toISOString(),
       });
       const user: User = await this.userRepository.save({
         username,

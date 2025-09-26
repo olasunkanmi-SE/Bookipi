@@ -11,7 +11,7 @@ import {
 @Entity({ name: 'base_model' })
 export class BaseModel {
   @PrimaryGeneratedColumn('uuid')
-  id?: string;
+  id: string;
 
   @Index()
   @CreateDateColumn()
