@@ -1,28 +1,25 @@
 import {
-  Controller,
-  Get,
-  Post,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
-  UsePipes,
-  ValidationPipe,
+  Get,
+  Param,
+  Patch,
+  Post,
 } from '@nestjs/common';
+import { Result } from 'src/common/result';
+import { CreateFlashSaleDto } from './dto/create-flash-sale.dto';
+import { UpdateFlashSaleDto } from './dto/update-flash-sale.dto';
 import {
   FlashSalesService,
   IFlashSalesResponseDTO,
 } from './flash-sales.service';
-import { CreateFlashSaleDto } from './dto/create-flash-sale.dto';
-import { UpdateFlashSaleDto } from './dto/update-flash-sale.dto';
-import { Result } from 'src/common/result';
 
 @Controller('flash-sales')
 export class FlashSalesController {
   constructor(private readonly flashSalesService: FlashSalesService) {}
 
   @Post('create')
-  @UsePipes(new ValidationPipe({ transform: true }))
   create(
     @Body() createFashSaleDto: CreateFlashSaleDto,
   ): Promise<Result<IFlashSalesResponseDTO>> {

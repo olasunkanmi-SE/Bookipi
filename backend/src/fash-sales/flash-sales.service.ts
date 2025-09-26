@@ -1,18 +1,14 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
-import { UpdateFlashSaleDto } from './dto/update-flash-sale.dto';
-import { CreateFlashSaleDto } from './dto/create-flash-sale.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Audit } from 'src/common/audit';
+import { ENV } from 'src/common/constants';
+import { Result } from 'src/common/result';
+import { logError, parseAndValidateDates } from 'src/common/utils';
 import { FlashSale } from 'src/infrastructure/data-access/models/flash-sales.entity';
 import { Repository } from 'typeorm';
-import { Audit } from 'src/common/audit';
-import { Result } from 'src/common/result';
-import { logError } from 'src/common/utils';
 import { DeleteResult } from 'typeorm/browser';
-import { ENV } from 'src/common/constants';
+import { CreateFlashSaleDto } from './dto/create-flash-sale.dto';
+import { UpdateFlashSaleDto } from './dto/update-flash-sale.dto';
 
 export interface IFlashSalesResponseDTO {
   id: string;
@@ -60,15 +56,11 @@ export class FlashSalesService {
   ): Promise<Result<IFlashSalesResponseDTO>> {
     try {
       const { startDate, endDate, productId } = createFlashSaleDto;
-      const validation = this.parseAndValidateDates(startDate, endDate);
-      if (!validation) {
-        throw new BadRequestException(
-          'Error while validating flashsales parameters',
-        );
-      }
+      parseAndValidateDates(startDate, endDate);
+
       const audit = Audit.create({
         auditCreatedBy: 'System',
-        auditCreatedDateTime: new Date().toString(),
+        auditCreatedDateTime: new Date().toISOString(),
       });
 
       const result = await this.flashSaleRepository.save({
@@ -160,49 +152,6 @@ export class FlashSalesService {
         throw new NotFoundException(`Flash sale with ID "${id}" not found.`);
       }
       return result;
-    } catch (error) {
-      logError(error, FlashSalesService.name);
-      throw error;
-    }
-  }
-
-  /**
-   * Validates the business rules for flash sale start and end dates.
-   *
-   * @param startDate - The proposed start date as an ISO string.
-   * @param endDate - The proposed end date as an ISO string.
-   * @returns `true` if all date rules pass.
-   * @throws {BadRequestException} If any date rule is violated.
-   */
-  parseAndValidateDates(startDate: string, endDate: string): boolean {
-    try {
-      let valid = false;
-      const startTime = new Date(startDate).getTime();
-      const endTime = new Date(endDate).getTime();
-
-      const currentTime = Date.now();
-
-      if (isNaN(startTime)) {
-        throw new BadRequestException('Invalid Start date');
-      }
-
-      if (isNaN(endTime)) {
-        throw new BadRequestException('Invalid End date');
-      }
-
-      if (startTime <= currentTime || endTime <= currentTime) {
-        throw new BadRequestException(
-          'Start and End date must be in the future',
-        );
-      }
-
-      if (startTime >= endTime) {
-        throw new BadRequestException(
-          'End time must be greater than start time',
-        );
-      }
-      valid = true;
-      return valid;
     } catch (error) {
       logError(error, FlashSalesService.name);
       throw error;

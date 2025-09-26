@@ -1,4 +1,4 @@
-import { Column, Entity, Index } from 'typeorm';
+import { Column, Entity, Index, Unique } from 'typeorm';
 import { BaseModel } from './base';
 
 @Entity('flashSales')
@@ -7,6 +7,7 @@ import { BaseModel } from './base';
   'startDate',
   'endDate',
 ])
+@Unique(['startDate', 'endDate', 'productId'])
 export class FlashSale extends BaseModel {
   @Column({ type: 'varchar', length: 64 })
   startDate: string;
