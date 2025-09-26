@@ -47,8 +47,6 @@ import * as Joi from 'joi';
       }),
       inject: [ConfigService],
     }),
-
-    BullModule.registerQueue({ name: 'flashSales' }),
     DatabaseModule,
     ProductsModule,
     FlashSalesModule,
