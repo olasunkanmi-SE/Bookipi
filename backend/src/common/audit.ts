@@ -55,12 +55,4 @@ export class Audit implements IAudit {
   static create(props: IAudit) {
     return new Audit(props);
   }
-
-  update(props: Partial<IAudit>): Audit {
-    const newProps = {
-      ...this.props,
-      ...props,
-    };
-    return new Audit(newProps);
-  }
 }

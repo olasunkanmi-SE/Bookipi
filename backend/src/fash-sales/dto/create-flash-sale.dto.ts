@@ -6,5 +6,9 @@ export class CreateFlashSaleDto {
 
   @IsString()
   @IsNotEmpty()
-  enDate: string;
+  endDate: string;
+
+  @IsString()
+  @IsNotEmpty()
+  productId: string;
 }
