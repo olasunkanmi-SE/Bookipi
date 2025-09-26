@@ -7,11 +7,13 @@ export enum OrderStatus {
 export const TYPES = {
   IAuthService: 'IAuthService',
   IUserService: 'IUserService',
+  IRedisService: 'IRedisService',
+  IFlashSalesService: 'IFlashSalesService',
 };
 
 export enum ENV {
   SALT_ROUNDS = 'SALT_ROUNDS',
   JWT_SECRET = 'JWT_SECRET',
-  EXPIRY = 3600,
+  JWT_EXPIRY = 3600,
   SYSTEM = 'System',
 }

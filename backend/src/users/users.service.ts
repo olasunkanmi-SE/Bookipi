@@ -15,6 +15,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { JwtService } from '@nestjs/jwt';
 import { Result } from 'src/common/result';
 import { Audit } from 'src/common/audit';
+import { JwtPayload } from 'src/infrastructure/interfaces/infrastructure';
 
 export interface IUserService {
   create(createUserDto: CreateUserDto): Promise<Result<ICreateUserResponseDTO>>;
@@ -50,15 +51,16 @@ export class UsersService {
         auditCreatedBy: username,
         auditCreatedDateTime: new Date().toISOString(),
       });
-      const user: User = await this.userRepository.save({
+      const user: User = this.userRepository.create({
         username,
         passwordHash: hash,
-        auditCreatedBy: audit.auditCreatedBy,
-        auditCreatedDateTime: audit.auditCreatedDateTime,
+        ...audit,
       });
+
+      const result = await this.userRepository.save(user);
       return Result.ok({
-        username: user.username,
-        auditCreatedDateTime: user.auditCreatedDateTime,
+        username: result.username,
+        auditCreatedDateTime: result.auditCreatedDateTime,
       });
     } catch (error) {
       logError(error, UsersService.name);
@@ -86,7 +88,7 @@ export class UsersService {
         throw new UnauthorizedException('Invalid Username or password');
       }
 
-      const payload = { sub: user.id, username: user.username };
+      const payload: JwtPayload = { sub: user.id, username: user.username };
       const secret = (await this.configService.get(ENV.JWT_SECRET)) as string;
       const options = { secret };
       const accessToken = await this.jwtService.signAsync(payload, options);
