@@ -1,5 +1,5 @@
-import { BaseModel } from './base';
 import { Column, Entity, Index, Unique } from 'typeorm';
+import { BaseModel } from './base';
 
 @Entity('users')
 @Unique(['username'])

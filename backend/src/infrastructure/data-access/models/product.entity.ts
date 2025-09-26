@@ -7,7 +7,7 @@ export class Product extends BaseModel {
   stock: number;
 
   @Index()
-  @Column()
+  @Column({ unique: true })
   name: string;
 
   @Column({ type: 'numeric', precision: 10, scale: 2 })

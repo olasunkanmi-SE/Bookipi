@@ -3,7 +3,7 @@ import { Column, Entity, Index, Unique } from 'typeorm';
 import { BaseModel } from './base';
 
 @Entity('orders')
-@Unique(['userId', 'productId']) // Enforces one item per user per product at the database level
+@Unique(['userId', 'productId'])
 export class Order extends BaseModel {
   @Index()
   @Column()

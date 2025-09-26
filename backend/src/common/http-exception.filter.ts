@@ -1,10 +1,21 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
-  ExceptionFilter,
-  Catch,
   ArgumentsHost,
+  Catch,
+  ExceptionFilter,
   HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+
+export const APIResponseMessage = {
+  serverError: 'Critical server error occured, please try again later',
+};
+
+export interface IRequestException {
+  statusCode: number;
+  message: string;
+}
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -12,13 +23,27 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
-    const status = exception.getStatus();
 
-    response.status(status).json({
-      statusCode: status,
+    const { statusCode, message } = this.getException(exception);
+    response.status(statusCode).json({
+      statusCode,
       timestamp: new Date().toISOString(),
       path: request.url,
-      message: exception.getResponse(),
+      message,
     });
+  }
+
+  private getException(exception: any): IRequestException {
+    let statusCode: number;
+    let message: any;
+    if (exception instanceof HttpException) {
+      statusCode = exception.getStatus();
+      const errorResponse: string | object = exception.getResponse();
+      message = (errorResponse as string) || exception.message;
+    } else {
+      statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
+      message = APIResponseMessage.serverError;
+    }
+    return { statusCode, message };
   }
 }
