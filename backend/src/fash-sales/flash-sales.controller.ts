@@ -10,10 +10,8 @@ import {
 import { Result } from 'src/common/result';
 import { CreateFlashSaleDto } from './dto/create-flash-sale.dto';
 import { UpdateFlashSaleDto } from './dto/update-flash-sale.dto';
-import {
-  FlashSalesService,
-  IFlashSalesResponseDTO,
-} from './flash-sales.service';
+import { FlashSalesService } from './flash-sales.service';
+import { IFlashSalesResponseDTO } from './interface/flash.sales';
 
 @Controller('flash-sales')
 export class FlashSalesController {

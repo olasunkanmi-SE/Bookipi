@@ -1,39 +1,25 @@
-import { HttpStatus, Inject, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Audit } from 'src/common/audit';
 import { ENV, TYPES } from 'src/common/constants';
-import { throwApplicationError } from 'src/common/exception.instance';
 import { Result } from 'src/common/result';
 import { parseAndValidateDates } from 'src/common/utils';
+import { IRedisService } from 'src/infrastructure/cache/redis.service';
 import { FlashSale } from 'src/infrastructure/data-access/models/flash-sales.entity';
 import { Repository } from 'typeorm';
 import { DeleteResult } from 'typeorm/browser';
 import { CreateFlashSaleDto } from './dto/create-flash-sale.dto';
 import { UpdateFlashSaleDto } from './dto/update-flash-sale.dto';
-import { IRedisService } from 'src/infrastructure/cache/redis.service';
-
-export interface IFlashSalesResponseDTO {
-  id: string;
-  startDate: string;
-  endDate: string;
-  auditCreatedBy: string;
-  auditCreatedDateTime: string;
-}
-
-export interface IFlashSalesService {
-  create(
-    createFlashSaleDto: CreateFlashSaleDto,
-  ): Promise<Result<IFlashSalesResponseDTO>>;
-  findAll(): Promise<Result<FlashSale[]>>;
-  findOne(id: string): Promise<FlashSale | null>;
-  update(
-    id: string,
-    updateFlashSaleDto: UpdateFlashSaleDto,
-  ): Promise<Result<FlashSale>>;
-  remove(id: string): Promise<DeleteResult>;
-  validateActiveFlashSale(productId: string): Promise<void>;
-  findById(productId: string): Promise<FlashSale | null>;
-}
+import {
+  IFlashSalesResponseDTO,
+  IFlashSalesService,
+} from './interface/flash.sales';
 
 /**
  * Manages the business logic for flash sale operations.
@@ -41,7 +27,7 @@ export interface IFlashSalesService {
  * including validation and auditing.
  */
 @Injectable()
-export class FlashSalesService {
+export class FlashSalesService implements IFlashSalesService {
   constructor(
     @InjectRepository(FlashSale)
     private readonly flashSaleRepository: Repository<FlashSale>,
@@ -74,12 +60,7 @@ export class FlashSalesService {
       auditCreatedDateTime: audit.auditCreatedDateTime,
     });
     const result = await this.flashSaleRepository.save(flashSale);
-    if (!result) {
-      throwApplicationError(
-        HttpStatus.INTERNAL_SERVER_ERROR,
-        'Error while creating flash sale',
-      );
-    }
+
     return Result.ok({
       id: result.id,
       productId: result.productId,
@@ -114,15 +95,6 @@ export class FlashSalesService {
     return flashSale;
   }
 
-  /**
-   * Updates an existing flash sale's properties.
-   *
-   * @param id - The ID of the flash sale to update.
-   * @param updateFlashSaleDto - The new values to apply.
-   * @returns A Result object containing the updated flash sale entity.
-   * @throws {NotFoundException} If no flash sale with the given ID exists.
-   * @throws {BadRequestException} If the update operation fails.
-   */
   async update(
     id: string,
     updateFlashSaleDto: UpdateFlashSaleDto,
@@ -130,10 +102,7 @@ export class FlashSalesService {
     let flashSale = await this.findOne(id);
 
     if (!flashSale) {
-      return throwApplicationError(
-        HttpStatus.NOT_FOUND,
-        `Flash sale with ID "${id}" not found.`,
-      );
+      throw new NotFoundException(`Flash sale with ID "${id}" not found.`);
     }
     flashSale = this.flashSaleRepository.merge(flashSale, updateFlashSaleDto);
     // Hardcoding system here because this is supposed to be done by an admin.
@@ -144,36 +113,20 @@ export class FlashSalesService {
     return Result.ok(updatedFlashSale);
   }
 
-  /**
-   * Deletes a flash sale from the database.
-   *
-   * @param id - The ID of the flash sale to delete.
-   * @returns A TypeORM DeleteResult object detailing the outcome.
-   * @throws {NotFoundException} If the flash sale to be deleted is not found.
-   */
   async remove(id: string): Promise<DeleteResult> {
     const result = await this.flashSaleRepository.delete(id);
     if (result.affected === 0) {
-      throwApplicationError(
-        HttpStatus.NOT_FOUND,
-        `Flash sale with ID "${id}" not found.`,
-      );
+      throw new NotFoundException(`Flash sale with ID "${id}" not found.`);
     }
     return result;
   }
 
-  /**
-   * Validates if a flash sale for a given product is currently active.
-   * Throws specific application errors if the sale is not found, has not started, or has ended.
-   * @param productId The ID of the product to validate.
-   */
   async validateActiveFlashSale(productId: string): Promise<void> {
     const flashSale = await this.findById(productId);
 
     if (!flashSale) {
-      return throwApplicationError(
-        HttpStatus.NOT_FOUND,
-        `Flash sale for product ${productId} does not exist.`,
+      throw new NotFoundException(
+        `Flash sale with ID "${productId}" not found.`,
       );
     }
 
@@ -183,25 +136,18 @@ export class FlashSalesService {
     const endTime = new Date(endDate).getTime();
 
     if (currentTime < startTime) {
-      throwApplicationError(
-        HttpStatus.FORBIDDEN,
+      throw new ForbiddenException(
         `Flash sale has not started yet. It begins at ${startDate}.`,
       );
     }
 
     if (currentTime > endTime) {
-      throwApplicationError(
-        HttpStatus.FORBIDDEN,
+      throw new BadRequestException(
         `Flash sale has ended. It concluded at ${endDate}.`,
       );
     }
   }
 
-  /**
-   * Finds a flash sale by its product ID, utilizing a cache-aside strategy.
-   * @param productId The ID of the product associated with the flash sale.
-   * @returns The FlashSale entity or null if not found.
-   */
   async findById(productId: string): Promise<FlashSale | null> {
     const cacheKey = this.getCacheKey(productId);
     const cachedFlashSale = (await this.cacheService.get(

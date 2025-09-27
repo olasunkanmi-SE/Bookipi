@@ -1,49 +1,53 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import {
-  ArgumentsHost,
-  Catch,
   ExceptionFilter,
+  Catch,
+  ArgumentsHost,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
-export const APIResponseMessage = {
-  serverError: 'Critical server error occured, please try again later',
-};
+@Catch()
+export class AllExceptionsFilter implements ExceptionFilter {
+  private readonly logger = new Logger(AllExceptionsFilter.name);
 
-export interface IRequestException {
-  statusCode: number;
-  message: string;
-}
-
-@Catch(HttpException)
-export class HttpExceptionFilter implements ExceptionFilter {
-  catch(exception: HttpException, host: ArgumentsHost) {
+  catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    const { statusCode, message } = this.getException(exception);
-    response.status(statusCode).json({
-      statusCode,
+    const status =
+      exception instanceof HttpException
+        ? exception.getStatus()
+        : HttpStatus.INTERNAL_SERVER_ERROR;
+
+    const message =
+      exception instanceof HttpException
+        ? exception.getResponse()
+        : 'An unexpected internal server error occurred';
+
+    const errorResponse = {
+      statusCode: status,
       timestamp: new Date().toISOString(),
       path: request.url,
-      message,
-    });
-  }
+      method: request.method,
+      error:
+        typeof message === 'string'
+          ? message
+          : (message as any).error || 'Internal Server Error',
+      details:
+        typeof message === 'object' && (message as any).message
+          ? (message as any).message
+          : undefined,
+    };
 
-  private getException(exception: any): IRequestException {
-    let statusCode: number;
-    let message: any;
-    if (exception instanceof HttpException) {
-      statusCode = exception.getStatus();
-      const errorResponse: string | object = exception.getResponse();
-      message = (errorResponse as string) || exception.message;
-    } else {
-      statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-      message = APIResponseMessage.serverError;
-    }
-    return { statusCode, message };
+    this.logger.error(
+      `HTTP Status: ${status} Error Message: ${JSON.stringify(errorResponse)}`,
+      exception instanceof Error ? exception.stack : '',
+    );
+    response.status(status).json(errorResponse);
   }
 }

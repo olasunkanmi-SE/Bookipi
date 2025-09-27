@@ -13,6 +13,9 @@ export class Order extends BaseModel {
   @Column()
   productId: string;
 
+  @Column({ nullable: true })
+  idempotencyKey: string;
+
   @Index()
   @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.PENDING })
   status: OrderStatus;

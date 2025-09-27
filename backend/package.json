@@ -24,7 +24,7 @@
     "revert:migration": "npm run build && typeorm migration:revert -d ./dist/typeorm.config.js"
   },
   "dependencies": {
-    "@nestjs/bullmq": "^11.0.3",
+    "@nestjs/bull": "^11.0.3",
     "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
@@ -34,9 +34,9 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/typeorm": "^11.0.0",
     "bcrypt": "^6.0.0",
-    "bullmq": "^5.58.9",
+    "bull": "^4.16.5",
     "cache-manager": "^7.2.2",
-    "cache-manager-ioredis": "^2.1.0",
+    "cache-manager-redis-store": "^3.0.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
     "joi": "^18.0.1",
@@ -54,6 +54,7 @@
     "@swc/cli": "^0.6.0",
     "@swc/core": "^1.10.7",
     "@types/bcrypt": "^6.0.0",
+    "@types/bull": "^4.10.4",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.7",

@@ -54,7 +54,8 @@ export class UsersService {
       const user: User = this.userRepository.create({
         username,
         passwordHash: hash,
-        ...audit,
+        auditCreatedBy: audit.auditCreatedBy,
+        auditCreatedDateTime: audit.auditCreatedDateTime,
       });
 
       const result = await this.userRepository.save(user);
