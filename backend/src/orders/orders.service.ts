@@ -1,5 +1,12 @@
 import { InjectQueue } from '@nestjs/bull';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bull';
 import { Audit } from 'src/common/audit';
@@ -52,7 +59,9 @@ export class OrdersService implements IOrderService {
         where: { id: productId },
       });
       if (!product) {
-        throw new Error(`product with ${productId} does not exist`);
+        throw new NotFoundException(
+          `Product with ID '${productId}' not found.`,
+        );
       }
       await this.cacheService.set(stockKey, product.stock);
     }
@@ -69,10 +78,12 @@ export class OrdersService implements IOrderService {
         productId,
       );
       if (hasPurchasedProduct) {
-        throw new Error(`User with id ${user.sub} has already made a purchase`);
+        throw new ForbiddenException(
+          `User with id ${user.sub} has already made a purchase`,
+        );
       }
       await this.initializeProductStock(productId);
-      await this.decrementStockInCache(
+      await this.cacheService.decreaseCount(
         productId,
         OrderQueueConstants.DECREMENT_COUNT,
       );
@@ -102,12 +113,12 @@ export class OrdersService implements IOrderService {
         jobId: job.id,
       });
     } catch (error) {
-      // If adding to the queue fails, we must revert the stock change.
       Logger.error(
         `Failed to add order job for product ${productId}. Reverting stock.`,
         error,
       );
-      await this.cacheService.increment(
+      // If adding to the queue fails, we must revert the stock change.
+      await this.cacheService.increaseCount(
         productId,
         OrderQueueConstants.DECREMENT_COUNT,
       );
@@ -141,7 +152,7 @@ export class OrdersService implements IOrderService {
 
     const result = await this.orderRepository.save(order);
     if (!result) {
-      throw new Error('Error while creating order');
+      throw new InternalServerErrorException('Error while creating the order.');
     }
 
     return {
@@ -165,11 +176,11 @@ export class OrdersService implements IOrderService {
       }),
     ]);
     if (!user) {
-      throw new Error('User does not exist ');
+      throw new NotFoundException(`User with ID '${userId}' not found.`);
     }
 
     if (!product) {
-      throw new Error('Product with id ${productId} does not exist');
+      throw new NotFoundException(`Product with ID '${productId}' not found.`);
     }
   }
 
@@ -214,7 +225,7 @@ export class OrdersService implements IOrderService {
     }
     const order = await this.orderRepository.findOne({ where: { id } });
     if (!order) {
-      throw new Error('order does not exist');
+      throw new NotFoundException(`Order with ID '${id}' not found.`);
     }
     await this.cacheService.set(cacheKey, order, 36000);
     return;
@@ -228,18 +239,5 @@ export class OrdersService implements IOrderService {
 
   private getCacheKey(orderId: string): string {
     return `order:${orderId}`;
-  }
-
-  private async decrementStockInCache(
-    productId: string,
-    quantity: number = 1,
-  ): Promise<boolean> {
-    const stockKey = `product:stock:${productId}`;
-    const newStock = await this.redisClient.decrBy(stockKey, quantity);
-    if (newStock < 0) {
-      await this.redisClient.incrBy(stockKey, quantity);
-      return false;
-    }
-    return true;
   }
 }

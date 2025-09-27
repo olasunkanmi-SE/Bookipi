@@ -1,4 +1,10 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Audit } from 'src/common/audit';
 import { TYPES } from 'src/common/constants';
@@ -41,7 +47,9 @@ export class ProductsService implements IProductService {
     const result = await this.productRepository.save(product);
 
     if (!result) {
-      throw new Error('Error while creating product');
+      throw new InternalServerErrorException(
+        'Error while creating the product',
+      );
     }
 
     return Result.ok({
@@ -66,7 +74,7 @@ export class ProductsService implements IProductService {
     }
     const product = await this.productRepository.findOne({ where: { id } });
     if (!product) {
-      throw new Error('Product does not exist');
+      throw new NotFoundException(`Product with ID ${id} not found.`);
     }
     await this.cacheService.set(cacheKey, product, 36000);
     return product;

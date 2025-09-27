@@ -1,13 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { HttpExceptionFilter } from './common/http-exception.filter';
+import { AllExceptionsFilter } from './common/http-exception.filter';
 import { Logger } from '@nestjs/common';
 import { validatePipeInstance } from './infrastructure/guards/validation.pipe.instance';
 
 async function bootstrap() {
   try {
     const app = await NestFactory.create(AppModule);
-    app.useGlobalFilters(new HttpExceptionFilter());
+    app.useGlobalFilters(new AllExceptionsFilter());
     app.useGlobalPipes(validatePipeInstance);
     await app.listen(process.env.PORT ?? 3000);
   } catch (error) {

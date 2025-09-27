@@ -8,19 +8,21 @@ export interface IRedisService {
   set(key: string, value: any, ttl?: number);
   delete(key: string);
   getNativeClient(): AppRedisClient;
-  increment(key: string, quantity: number): Promise<boolean>;
+  increaseCount(key: string, quantity: number): Promise<boolean>;
+  decreaseCount(key: string, quantity: number): Promise<boolean>;
 }
 
 @Injectable()
 export class CacheService implements IRedisService {
   private incrementScriptSha: string;
+  private decrementScriptSha: string;
   constructor(
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
     @Inject(REDIS_CLIENT) private readonly redisClient: AppRedisClient,
   ) {}
 
   async onModuleInit() {
-    const script = `
+    const incrementScript = `
     local current = redis.call('GET', KEYS[1])
     if current and tonumber(current) < 0 then
       return 0
@@ -28,7 +30,20 @@ export class CacheService implements IRedisService {
     redis.call('INCRBY', KEYS[1], ARGV[1])
     return 1
     `;
-    this.incrementScriptSha = await this.getNativeClient().scriptLoad(script);
+
+    const decrementScript = `
+     local current = redis.call('GET', KEYS[1])
+    if current and tonumber(current) < 0 then
+      return 0
+    end
+    redis.call('DECRBY', KEYS[1], ARGV[1])
+    return 1`;
+
+    this.incrementScriptSha =
+      await this.getNativeClient().scriptLoad(incrementScript);
+
+    this.decrementScriptSha =
+      await this.getNativeClient().scriptLoad(decrementScript);
   }
 
   async get(key: string): Promise<unknown> {
@@ -58,21 +73,36 @@ export class CacheService implements IRedisService {
    * @param quantity - The amount to increment by.
    * @returns A promise that resolves to `true` if the script executed successfully (returned 1).
    */
-  async increment(key: string, quantity: number): Promise<boolean> {
+  private async InCreaseOrDecreaseCount(
+    key: string,
+    quantity: number,
+    script: string,
+  ): Promise<boolean> {
     try {
-      const result = await this.getNativeClient().evalSha(
-        this.incrementScriptSha,
-        {
-          keys: [key],
-          arguments: [quantity.toString()],
-        },
-      );
+      const result = await this.getNativeClient().evalSha(script, {
+        keys: [key],
+        arguments: [quantity.toString()],
+      });
       return result === 1;
     } catch (error) {
-      // Handle errors, e.g., if script not loaded (NOSCRIPT), reload or fallback to eval.
-      // For production, add retry logic or logging.
-      Logger.error(`Failed to execute increment script for key: ${key}`, error);
+      Logger.error(`Failed to execute script for key: ${key}`, error);
       return false;
     }
+  }
+
+  async increaseCount(key: string, quantity: number): Promise<boolean> {
+    return await this.InCreaseOrDecreaseCount(
+      key,
+      quantity,
+      this.incrementScriptSha,
+    );
+  }
+
+  async decreaseCount(key: string, quantity: number): Promise<boolean> {
+    return await this.InCreaseOrDecreaseCount(
+      key,
+      quantity,
+      this.decrementScriptSha,
+    );
   }
 }

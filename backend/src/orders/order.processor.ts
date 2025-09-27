@@ -30,6 +30,7 @@ export class OrderProcessor {
         await this.orderService.findByIdempotencyKey(idempotencyKey);
       if (existingOrder) {
         Logger.log(`Job ${job.id} has already been processed. Skipping.`);
+        await queryRunner.commitTransaction();
         return;
       }
       const { userId, productId, username } = job.data;
