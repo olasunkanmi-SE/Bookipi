@@ -37,7 +37,7 @@ export class OrderProcessor {
       const product: Product = await this.productService.findOne(productId);
 
       if (product.stock < OrderQueueConstants.DECREMENT_COUNT) {
-        throw new Error(`Not enough stock for product ${productId}`);
+        throw new Error(`Product out of stock for ${productId}`);
       }
 
       const purchaseAttempt = await this.productService.handlePurchaseAttempt(
