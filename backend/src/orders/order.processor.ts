@@ -1,20 +1,14 @@
 import { Process, Processor } from '@nestjs/bull';
 import { Inject, Logger } from '@nestjs/common';
 import { Job } from 'bull';
-import {
-  CREATE_ORDER_JOB,
-  DECREMENT_COUNT,
-  ORDER_PROCESSING,
-  OrderStatus,
-  TYPES,
-} from 'src/common/constants';
+import { OrderQueueConstants, OrderStatus, TYPES } from 'src/common/constants';
 import { logError } from 'src/common/utils';
 import { Product } from 'src/infrastructure/data-access/models/product.entity';
 import { IProductService } from 'src/products/interface/product';
-import { IOrderJobPayload, IOrderService } from './interface/order';
 import { DataSource } from 'typeorm';
+import { IOrderJobPayload, IOrderService } from './interface/order';
 
-@Processor(ORDER_PROCESSING)
+@Processor(OrderQueueConstants.QUEUE_NAME)
 export class OrderProcessor {
   constructor(
     @Inject(TYPES.IProductService)
@@ -24,7 +18,7 @@ export class OrderProcessor {
     private readonly dataSource: DataSource,
   ) {}
 
-  @Process(CREATE_ORDER_JOB)
+  @Process(OrderQueueConstants.CREATE_ORDER_JOB)
   async handleCreateOrder(job: Job<IOrderJobPayload>) {
     Logger.log(`Processing order job ${job.id} for user ${job.data.userId}`);
     const queryRunner = this.dataSource.createQueryRunner();
@@ -41,9 +35,10 @@ export class OrderProcessor {
       const { userId, productId, username } = job.data;
       const product: Product = await this.productService.findOne(productId);
 
-      if (product.stock < DECREMENT_COUNT) {
+      if (product.stock < OrderQueueConstants.DECREMENT_COUNT) {
         throw new Error(`Not enough stock for product ${productId}`);
       }
+
       const purchaseAttempt = await this.productService.handlePurchaseAttempt(
         productId,
         userId,
@@ -53,6 +48,7 @@ export class OrderProcessor {
           purchaseAttempt.message ?? 'Sorry, this item is now out of stock!',
         );
       }
+      // Creating an order can be made after payment or other business rules have been checked
       const order = await this.orderService.create(
         { productId, idempotencyKey },
         { sub: userId, username },

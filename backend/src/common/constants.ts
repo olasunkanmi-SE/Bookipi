@@ -20,6 +20,14 @@ export enum ENV {
   SYSTEM = 'System',
 }
 
-export const ORDER_PROCESSING = 'order-processing';
-export const CREATE_ORDER_JOB = 'create-order-job';
-export const DECREMENT_COUNT = 1;
+export const OrderQueueConstants = {
+  QUEUE_NAME: 'order-queue',
+  CREATE_ORDER_JOB: 'create-order-job',
+  DECREMENT_COUNT: 1,
+};
+
+export const JobOptions = {
+  DEFAULT_ATTEMPTS: 3,
+  BACKOFF_DELAY_MS: 1000,
+  TYPE: 'exponential',
+};

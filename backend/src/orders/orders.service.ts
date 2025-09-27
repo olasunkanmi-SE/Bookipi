@@ -2,15 +2,15 @@ import { InjectQueue } from '@nestjs/bull';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Queue } from 'bull';
-import { RedisClientType } from 'redis';
 import { Audit } from 'src/common/audit';
 import {
-  CREATE_ORDER_JOB,
-  DECREMENT_COUNT,
+  JobOptions,
+  OrderQueueConstants,
   OrderStatus,
   TYPES,
 } from 'src/common/constants';
 import { Result } from 'src/common/result';
+import { AppRedisClient } from 'src/infrastructure/cache/redis.provider';
 import { IRedisService } from 'src/infrastructure/cache/redis.service';
 import { Order } from 'src/infrastructure/data-access/models/order.entity';
 import { Product } from 'src/infrastructure/data-access/models/product.entity';
@@ -19,18 +19,16 @@ import { JwtPayload } from 'src/infrastructure/interfaces/infrastructure';
 import { Repository } from 'typeorm';
 import { UpdateResult } from 'typeorm/browser';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { IOrderJobPayload, IOrderService } from './interface/order';
-
-export interface IOrderResponseDTO {
-  id: string;
-  userId: string;
-  productId: string;
-  status: OrderStatus;
-}
+import {
+  IOrderJobPayload,
+  IOrderQueue,
+  IOrderResponseDTO,
+  IOrderService,
+} from './interface/order';
 
 @Injectable()
 export class OrdersService implements IOrderService {
-  private redisClient: RedisClientType;
+  private redisClient: AppRedisClient;
   constructor(
     @InjectRepository(Order)
     private readonly orderRepository: Repository<Order>,
@@ -38,40 +36,84 @@ export class OrdersService implements IOrderService {
     private readonly productRepository: Repository<Product>,
     @InjectRepository(User) private readonly userRepository: Repository<User>,
     @Inject(TYPES.IRedisService) private readonly cacheService: IRedisService,
-    @InjectQueue('order-queue') private readonly orderQueue: Queue,
+    @InjectQueue(OrderQueueConstants.QUEUE_NAME)
+    private readonly orderQueue: Queue,
   ) {}
 
   onModuleInit() {
     this.redisClient = this.cacheService.getNativeClient();
   }
 
-  private async addOrderToQueue(
+  private async initializeProductStock(productId: string) {
+    const stockKey = `product:stock:${productId}`;
+    const inCache = await this.cacheService.get(stockKey);
+    if (!inCache) {
+      const product = await this.productRepository.findOne({
+        where: { id: productId },
+      });
+      if (!product) {
+        throw new Error(`product with ${productId} does not exist`);
+      }
+      await this.cacheService.set(stockKey, product.stock);
+    }
+  }
+
+  async addOrderToQueue(
     createOrderDto: CreateOrderDto,
     user: JwtPayload,
-  ) {
+  ): Promise<Result<IOrderQueue>> {
     const { productId } = createOrderDto;
-    await this.decrementStockInCache(productId, DECREMENT_COUNT);
-    const jobPayload: IOrderJobPayload = {
-      userId: user.sub,
-      productId: createOrderDto.productId,
-      username: user.username,
-    };
-    const job = await this.orderQueue.add(CREATE_ORDER_JOB, jobPayload, {
-      attempts: 3,
-      backoff: {
-        type: 'exponential',
-        delay: 1000,
-      },
-      removeOnComplete: true,
-      removeOnFail: false,
-    });
+    try {
+      const hasPurchasedProduct = await this.hasAttemptedAPurchase(
+        user.sub,
+        productId,
+      );
+      if (hasPurchasedProduct) {
+        throw new Error(`User with id ${user.sub} has already made a purchase`);
+      }
+      await this.initializeProductStock(productId);
+      await this.decrementStockInCache(
+        productId,
+        OrderQueueConstants.DECREMENT_COUNT,
+      );
+      const jobPayload: IOrderJobPayload = {
+        userId: user.sub,
+        productId: createOrderDto.productId,
+        username: user.username,
+      };
+      const job = await this.orderQueue.add(
+        OrderQueueConstants.CREATE_ORDER_JOB,
+        jobPayload,
+        {
+          attempts: JobOptions.DEFAULT_ATTEMPTS,
+          backoff: {
+            type: 'exponential',
+            delay: JobOptions.BACKOFF_DELAY_MS,
+          },
+          removeOnComplete: true,
+          removeOnFail: false,
+        },
+      );
 
-    Logger.log(`Job with ID ${job.id} added to the order-queue.`);
+      Logger.log(`Job with ID ${job.id} added to the order-queue.`);
 
-    return Result.ok({
-      message: 'Your order is being processed.',
-      jobId: job.id,
-    });
+      return Result.ok({
+        message: 'Your order is being processed.',
+        jobId: job.id,
+      });
+    } catch (error) {
+      // If adding to the queue fails, we must revert the stock change.
+      Logger.error(
+        `Failed to add order job for product ${productId}. Reverting stock.`,
+        error,
+      );
+      await this.cacheService.increment(
+        productId,
+        OrderQueueConstants.DECREMENT_COUNT,
+      );
+
+      throw error;
+    }
   }
 
   async create(
@@ -89,10 +131,12 @@ export class OrdersService implements IOrderService {
     });
 
     const order = this.orderRepository.create({
+      idempotencyKey: createOrderDto.idempotencyKey,
       status: status ?? OrderStatus.PENDING,
       productId,
       userId: user.sub,
-      ...audit,
+      auditCreatedBy: audit.auditCreatedBy,
+      auditCreatedDateTime: audit.auditCreatedDateTime,
     });
 
     const result = await this.orderRepository.save(order);
@@ -139,7 +183,7 @@ export class OrdersService implements IOrderService {
     return update.affected && update.affected > 0 ? true : false;
   }
 
-  async hasUserPurchasedProduct(
+  async hasAttemptedAPurchase(
     userId: string,
     productId: string,
   ): Promise<boolean> {
@@ -147,10 +191,15 @@ export class OrdersService implements IOrderService {
       where: {
         userId,
         productId,
-        status: OrderStatus.SUCCESS,
       },
     });
-    return !!order;
+    if (!order) {
+      return false;
+    }
+    return (
+      order.status === OrderStatus.PENDING ||
+      order.status === OrderStatus.SUCCESS
+    );
   }
 
   async findAll(): Promise<Order[]> {

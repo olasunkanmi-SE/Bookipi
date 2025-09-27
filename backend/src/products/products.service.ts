@@ -35,7 +35,8 @@ export class ProductsService implements IProductService {
       name,
       stock,
       price,
-      ...audit,
+      auditCreatedBy: audit.auditCreatedBy,
+      auditCreatedDateTime: audit.auditCreatedDateTime,
     });
     const result = await this.productRepository.save(product);
 
