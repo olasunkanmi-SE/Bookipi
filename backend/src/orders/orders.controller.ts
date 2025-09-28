@@ -5,17 +5,19 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { OrdersService } from './orders.service';
 import { IOrderQueue } from './interface/order';
 import { Result } from 'src/common/result';
+import { FlashSaleGuard } from 'src/infrastructure/guards/flash.sale';
 
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Post('create')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, FlashSaleGuard)
   async create(
     @Body() createOrderDto: CreateOrderDto,
     @Req() req: Request,
   ): Promise<Result<IOrderQueue>> {
+    console.log(req);
     const user = req['user'] as JwtPayload;
     return await this.ordersService.addOrderToQueue(createOrderDto, user);
   }
@@ -24,7 +26,7 @@ export class OrdersController {
   async findAll() {
     return await this.ordersService.findAll();
   }
-
+  @Get('user')
   @UseGuards(AuthGuard)
   async getUserOrders(@Req() req: Request) {
     const user = req['user'] as JwtPayload;

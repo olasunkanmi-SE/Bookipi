@@ -21,8 +21,8 @@ export class UsersController {
     return await this.usersService.signIn(createUserDto);
   }
 
-  @Get(':name')
-  async getUser(@Param('name') name: string) {
-    return await this.usersService.getUserByName(name);
+  @Get(':email')
+  async getUser(@Param('email') email: string) {
+    return await this.usersService.getUserByEmail(email);
   }
 }

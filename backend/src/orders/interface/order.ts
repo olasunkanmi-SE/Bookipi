@@ -24,7 +24,7 @@ export interface IOrderService {
 export interface IOrderJobPayload {
   userId: string;
   productId: string;
-  username: string;
+  email: string;
 }
 
 export interface IOrderQueue {

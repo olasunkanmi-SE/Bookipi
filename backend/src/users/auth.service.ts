@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -31,7 +30,7 @@ export class AuthService implements IAuthService {
       return hashedPassword;
     } catch (error) {
       Logger.error('Critical error during password hashing:', error);
-      throw new BadRequestException('Password hashing failed.');
+      throw error;
     }
   }
 
@@ -43,9 +42,7 @@ export class AuthService implements IAuthService {
       return await bcrypt.compare(password, hashedPassword);
     } catch (error) {
       Logger.error('Error during password verification:', error);
-      throw new InternalServerErrorException(
-        'An unexpected error occurred during authentication.',
-      );
+      throw error;
     }
   }
 }

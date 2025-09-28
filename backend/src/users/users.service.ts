@@ -20,12 +20,13 @@ import { JwtPayload } from 'src/infrastructure/interfaces/infrastructure';
 export interface IUserService {
   create(createUserDto: CreateUserDto): Promise<Result<ICreateUserResponseDTO>>;
   signIn(createUserDto: CreateUserDto): Promise<Result<string>>;
-  getUserByName(username: string): Promise<User | null>;
+  getUserByName(email: string): Promise<User | null>;
 }
 
 export interface ICreateUserResponseDTO {
-  username: string;
+  email: string;
   auditCreatedDateTime: string;
+  username: string;
 }
 
 @Injectable()
@@ -41,18 +42,19 @@ export class UsersService {
     createUserDto: CreateUserDto,
   ): Promise<Result<ICreateUserResponseDTO>> {
     try {
-      const { username, password } = createUserDto;
-      const existingUser = await this.getUserByName(username);
+      const { email, password, username } = createUserDto;
+      const existingUser = await this.getUserByEmail(email);
       if (existingUser) {
         throw new BadRequestException('User already exists');
       }
       const hash: string = await this.authService.hashPassword(password);
       const audit = Audit.create({
-        auditCreatedBy: username,
+        auditCreatedBy: email,
         auditCreatedDateTime: new Date().toISOString(),
       });
       const user: User = this.userRepository.create({
         username,
+        email,
         passwordHash: hash,
         auditCreatedBy: audit.auditCreatedBy,
         auditCreatedDateTime: audit.auditCreatedDateTime,
@@ -61,11 +63,12 @@ export class UsersService {
       const result = await this.userRepository.save(user);
       return Result.ok({
         username: result.username,
+        email: result.email,
         auditCreatedDateTime: result.auditCreatedDateTime,
       });
     } catch (error) {
       logError(error, UsersService.name);
-      throw new BadRequestException('Error while creating user');
+      throw error;
     }
   }
 
@@ -73,11 +76,11 @@ export class UsersService {
     createUserDto: CreateUserDto,
   ): Promise<Result<{ accessToken: string }>> {
     try {
-      const { username, password } = createUserDto;
-      const user = await this.getUserByName(username);
+      const { email, password } = createUserDto;
+      const user = await this.getUserByEmail(email);
 
       if (!user) {
-        throw new UnauthorizedException('User does not exist');
+        throw new UnauthorizedException('Invalid email or password');
       }
 
       const validatePassword = await this.authService.verifyPassword(
@@ -86,23 +89,27 @@ export class UsersService {
       );
 
       if (!validatePassword) {
-        throw new UnauthorizedException('Invalid Username or password');
+        throw new UnauthorizedException('Invalid email or password');
       }
 
-      const payload: JwtPayload = { sub: user.id, username: user.username };
+      const payload: JwtPayload = { sub: user.id, email: user.email };
       const secret = (await this.configService.get(ENV.JWT_SECRET)) as string;
       const options = { secret };
       const accessToken = await this.jwtService.signAsync(payload, options);
-      return Result.ok({ accessToken });
+      return Result.ok({
+        email: user.email,
+        username: user.username,
+        accessToken,
+      });
     } catch (error) {
       logError(error, UsersService.name);
-      throw new BadRequestException('Error while signing in user');
+      throw error;
     }
   }
 
-  async getUserByName(username: string): Promise<User | null> {
+  async getUserByEmail(email: string): Promise<User | null> {
     const user = await this.userRepository.findOne({
-      where: { username },
+      where: { email },
     });
     return user;
   }

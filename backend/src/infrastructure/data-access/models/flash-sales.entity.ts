@@ -1,5 +1,6 @@
-import { Column, Entity, Index, Unique } from 'typeorm';
+import { Column, Entity, Index, JoinColumn, ManyToOne, Unique } from 'typeorm';
 import { BaseModel } from './base';
+import { Product } from './product.entity';
 
 @Entity('flashSales')
 @Index('IDX_flashSales_product_start_end', [
@@ -17,4 +18,8 @@ export class FlashSale extends BaseModel {
 
   @Column()
   productId: string;
+
+  @ManyToOne(() => Product)
+  @JoinColumn({ name: 'productId' })
+  product: Product;
 }

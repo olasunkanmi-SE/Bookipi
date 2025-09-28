@@ -26,7 +26,7 @@ export class FlashSalesController {
 
   @Get()
   findAll() {
-    return this.flashSalesService.findAll();
+    return this.flashSalesService.find();
   }
 
   @Get(':id')
