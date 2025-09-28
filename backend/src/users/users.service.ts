@@ -96,7 +96,11 @@ export class UsersService {
       const secret = (await this.configService.get(ENV.JWT_SECRET)) as string;
       const options = { secret };
       const accessToken = await this.jwtService.signAsync(payload, options);
-      return Result.ok({ accessToken });
+      return Result.ok({
+        email: user.email,
+        username: user.username,
+        accessToken,
+      });
     } catch (error) {
       logError(error, UsersService.name);
       throw error;

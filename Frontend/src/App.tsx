@@ -1,14 +1,13 @@
+import { useEffect } from "react";
 import { Col, Container, Row } from "react-bootstrap";
 import { Link, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { NavBar } from "./components/NavBar";
 import { AuthProvider } from "./contexts/AuthContext";
+import { useAuth } from "./hooks/useAuth";
+
 import { Login } from "./pages/Login";
 import { Register } from "./pages/Register";
-import { Event } from "./pages/Event";
-import { useEffect } from "react";
-import { useAuth } from "./hooks/useAuth";
-import { SingleEvent } from "./pages/SingleEvent";
-import { EventDraft } from "./pages/Draft";
+import { Product } from "./pages/Product";
 
 function App() {
   const navigate = useNavigate();
@@ -21,7 +20,7 @@ function App() {
       }, 500);
       return () => clearTimeout(redirectTimeout);
     }
-  }, [navigate]);
+  }, [navigate, isAuthenticated]);
   return (
     <AuthProvider>
       <div>
@@ -30,20 +29,11 @@ function App() {
             <Col md={3}></Col>
             <Col md={6}>
               <Routes>
-                <Route path="/" element={<NavBar />}>
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/events" element={<Event />} />
-                  <Route path="/events/:id" element={<SingleEvent />} />
-                  <Route path="/events/drafts" element={<EventDraft />} />
-                  <Route path="*" element={<Navigate to=".." />} />
-                </Route>
+                <Route path="/register" element={<Register />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/" element={<Product />} />
+                <Route path="*" element={<Navigate to=".." />} />
               </Routes>
-              <div style={{ marginTop: "20px" }}>
-                <Link to="/events">
-                  <button>Welcome Go to Events</button>
-                </Link>
-              </div>
             </Col>
             <Col md={3}></Col>
           </Row>
