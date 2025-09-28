@@ -1,5 +1,8 @@
 # Bookipi
 
+<img width="703" height="783" alt="Screenshot 2025-09-28 at 8 29 57 PM" src="https://github.com/user-attachments/assets/4abbeabc-1fd6-459f-8ccc-25bf187a69bc" />
+
+
 ### 1. Clone the repository
 
 ```bash
@@ -184,6 +187,15 @@ The access token is automatically added in the header in the Frontend app.
 cd Backend
 artillery run stress.yml --output test-report.json
 ```
+
+## Features
+
+**System Architecture Diagram**
+<img width="1680" height="1050" alt="Screenshot 2025-09-28 at 10 42 55 PM" src="https://github.com/user-attachments/assets/3b9d2dcd-bcf5-4282-96ff-86e57fe5c244" />
+
+**Sequence Diagram: Creating an Order**
+<img width="1680" height="1050" alt="Screenshot 2025-09-28 at 10 45 07 PM" src="https://github.com/user-attachments/assets/29203b2b-a94f-47f9-b6d0-b9f7bc245f27" />
+
 
 ## Features
 
