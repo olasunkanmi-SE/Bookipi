@@ -1,0 +1,70 @@
+config:
+  target: "http://localhost:3000"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+  
+  # The payload section is great as is.
+  payload:
+    path: "./script/users.csv"
+    fields:
+      - "email"
+      - "password"
+  
+  # REVISED: Switched to a multi-phase approach for more insightful results.
+  phases:
+    - duration: 60
+      arrivalRate: 10
+      name: "Phase 1: Warm-up"
+    - duration: 120
+      arrivalRate: 10
+      rampTo: 100
+      name: "Phase 2: Gradual Ramp-Up"
+    - duration: 300
+      arrivalRate: 100
+      name: "Phase 3: Sustained Peak Load"
+
+scenarios:
+  # RENAMED: The scenario now reflects the full user journey.
+  - name: "User Signup, Login, and Order Creation"
+    flow:
+      # Step 1: Create a new user account.
+      # This step must come first, as a user cannot sign in before they exist.
+      - post:
+          url: "/users/create"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          # We expect a 201 (Created) status for a successful registration.
+          expect:
+            - statusCode: 201
+
+      # Step 2: Login with the newly created credentials.
+      - post:
+          url: "/users/signin"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          capture:
+            - json: "$.data.accessToken"
+              as: "access_token"
+          # A robust check to ensure the token was actually returned.
+          expect:
+            - statusCode: 200
+            - hasProperty: 'data.accessToken'
+      
+      # Step 3: Loop to simulate the authenticated user creating multiple orders.
+      - loop:
+        - post:
+            url: "/orders/create"
+            headers:
+              Authorization: "Bearer {{ access_token }}"
+            json:
+              productId: "48c907d8-c19e-4d75-92a9-febd021bea3f"
+            expect:
+              - statusCode: 201
+        
+        # "Think time" simulates a user pausing between actions.
+        - think: 2 # Pause for 2 seconds
+
+        count: 5 # Each user will create 5 orders per session.
