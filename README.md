@@ -75,6 +75,13 @@ The web application will be available at `http://localhost:5173`
 
 A full-stack e-commerce application with flash sales functionality, built with NestJS backend and React frontend.
 
+**System Architecture Diagram**
+<img width="1680" height="1050" alt="Screenshot 2025-09-28 at 10 42 55 PM" src="https://github.com/user-attachments/assets/3b9d2dcd-bcf5-4282-96ff-86e57fe5c244" />
+
+**Sequence Diagram: Creating an Order**
+<img width="1680" height="1050" alt="Screenshot 2025-09-28 at 10 45 07 PM" src="https://github.com/user-attachments/assets/29203b2b-a94f-47f9-b6d0-b9f7bc245f27" />
+
+
 # How to test
 
 - Create a new user by calling this endpoint localhost:{port}/users/create
@@ -189,13 +196,6 @@ artillery run stress.yml --output test-report.json
 ```
 
 ## Features
-
-**System Architecture Diagram**
-<img width="1680" height="1050" alt="Screenshot 2025-09-28 at 10 42 55 PM" src="https://github.com/user-attachments/assets/3b9d2dcd-bcf5-4282-96ff-86e57fe5c244" />
-
-**Sequence Diagram: Creating an Order**
-<img width="1680" height="1050" alt="Screenshot 2025-09-28 at 10 45 07 PM" src="https://github.com/user-attachments/assets/29203b2b-a94f-47f9-b6d0-b9f7bc245f27" />
-
 
 ## Features
 
