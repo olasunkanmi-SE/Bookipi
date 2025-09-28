@@ -16,7 +16,7 @@ export interface IFlashSalesService {
   create(
     createFlashSaleDto: CreateFlashSaleDto,
   ): Promise<Result<IFlashSalesResponseDTO>>;
-  findAll(): Promise<Result<FlashSale[]>>;
+  find(): Promise<Result<FlashSale[] | null>>;
   findOne(id: string): Promise<FlashSale | null>;
   update(
     id: string,

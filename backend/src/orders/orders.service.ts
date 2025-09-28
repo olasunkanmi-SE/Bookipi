@@ -78,9 +78,7 @@ export class OrdersService implements IOrderService {
         productId,
       );
       if (hasPurchasedProduct) {
-        throw new ForbiddenException(
-          `User with id ${user.sub} has already made a purchase`,
-        );
+        throw new ForbiddenException(`You have already made a purchase`);
       }
       await this.initializeProductStock(productId);
       await this.cacheService.decreaseCount(
@@ -223,12 +221,12 @@ export class OrdersService implements IOrderService {
     if (cachedOrder) {
       return cachedOrder;
     }
-    const order = await this.orderRepository.findOne({ where: { id } });
+    const order = await this.orderRepository.findOne({ where: { userId: id } });
     if (!order) {
       throw new NotFoundException(`Order with ID '${id}' not found.`);
     }
     await this.cacheService.set(cacheKey, order, 36000);
-    return;
+    return order;
   }
 
   async findByIdempotencyKey(key: string): Promise<Order | null> {

@@ -1,7 +1,7 @@
 import { createContext, useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "react-query";
 import { useNavigate } from "react-router-dom";
-import { Login, Register } from "../apis/usersApi";
+import { Login, Register } from "../apis/users-api";
 import { ICreateUser, IUser } from "../interfaces/user.interface";
 import {
   clearStorage,
@@ -61,8 +61,8 @@ export const AuthProvider = ({ children }: AuthenticationProviderProps) => {
       setError(null);
       await signUpMutation.mutateAsync(user);
     } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.message || "An unknown error occurred";
+      console.log(err);
+      const errorMessage = err.response?.data?.details || "Invalid credentials";
       setError(errorMessage);
       throw err;
     }

@@ -1,37 +1,59 @@
 // Example usage
-import Event from "./Event";
 import { Container, Row } from "react-bootstrap";
-import { useAuth } from "../hooks/useAuth";
+import { useQuery } from "react-query";
 import { Navigate } from "react-router-dom";
+import { GetFlashSaleEvent } from "../apis/events-api";
 import { NavBar } from "../components/NavBar";
+import { useAuth } from "../hooks/useAuth";
+import Event from "./Event";
 
 export const Product = () => {
   const { isAuthenticated, currentUser } = useAuth();
+  const {
+    isLoading,
+    isError,
+    error,
+    data: flashSaleResponse,
+  } = useQuery<any, Error>("flashSales", GetFlashSaleEvent);
+
   if (!isAuthenticated) {
     return <Navigate to="/login" />;
   }
 
-  const sampleProduct = {
-    id: "1",
-    name: "Wireless Noise-Cancelling Headphones",
-    originalPrice: 299.99,
-    salePrice: 199.99,
+  if (isLoading) {
+    <div className="loading-skeleton">
+      <div className="rectangular-div"></div>
+    </div>;
+  }
+
+  if (isError) {
+    return <div>Error: {error.message}</div>;
+  }
+
+  const currentFlashSale = flashSaleResponse ? flashSaleResponse[0] : undefined;
+
+  if (!currentFlashSale) {
+    return <div>No flash sales available</div>;
+  }
+
+  const product = {
+    id: String(currentFlashSale.product.id),
+    name: String(currentFlashSale.product.name),
+    originalPrice: parseFloat(currentFlashSale.product.price),
+    salePrice: parseFloat(currentFlashSale.product.price) * 0.7,
     imageUrl:
       "https://cdn.thewirecutter.com/wp-content/media/2023/09/noise-cancelling-headphone-2048px-0876.jpg?auto=webp&quality=75&width=1024&dpr=2",
-    description: "Premium wireless headphones with active noise cancellation",
-    stockQuantity: 1,
-    endTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
-  };
-
-  const handleBuy = () => {
-    console.log("Purchase initiated");
+    description: String(currentFlashSale.product.name),
+    stockQuantity: Number(currentFlashSale.product.stock),
+    startDate: String(currentFlashSale.startDate),
+    endDate: String(currentFlashSale.endDate),
   };
 
   return (
     <Container>
       <NavBar />
       <Row className="justify-content-center">
-        <Event product={sampleProduct} onBuy={handleBuy} />
+        <Event product={product} />
       </Row>
     </Container>
   );

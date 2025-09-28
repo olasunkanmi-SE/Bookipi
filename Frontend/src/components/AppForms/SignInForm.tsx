@@ -52,7 +52,7 @@ export const LoginForm = () => {
     try {
       login(data);
       if (isAuthenticated) {
-        navigate("/events");
+        navigate("/");
       }
     } catch (error: any) {
       const message =

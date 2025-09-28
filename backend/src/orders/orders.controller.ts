@@ -17,6 +17,7 @@ export class OrdersController {
     @Body() createOrderDto: CreateOrderDto,
     @Req() req: Request,
   ): Promise<Result<IOrderQueue>> {
+    console.log(req);
     const user = req['user'] as JwtPayload;
     return await this.ordersService.addOrderToQueue(createOrderDto, user);
   }
@@ -25,7 +26,7 @@ export class OrdersController {
   async findAll() {
     return await this.ordersService.findAll();
   }
-
+  @Get('user')
   @UseGuards(AuthGuard)
   async getUserOrders(@Req() req: Request) {
     const user = req['user'] as JwtPayload;

@@ -25,7 +25,6 @@ export const Login = async (
   user: Omit<ICreateUser, "username">
 ): Promise<IUser> => {
   const response = await userApi.post("/users/signin", user);
-  console.log(response);
   return response.data.data;
 };
 

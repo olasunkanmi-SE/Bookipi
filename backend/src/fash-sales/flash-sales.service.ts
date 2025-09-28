@@ -51,11 +51,18 @@ export class FlashSalesService implements IFlashSalesService {
       auditCreatedBy: 'System',
       auditCreatedDateTime: new Date().toISOString(),
     });
+    const startDateObj = new Date(startDate);
+    startDateObj.setHours(0, 0, 0, 0);
+    const startDateStr = startDateObj.toISOString();
+
+    const endDateObj = new Date(endDate);
+    endDateObj.setHours(23, 59, 59, 999);
+    const endDateStr = endDateObj.toISOString();
 
     const flashSale = this.flashSaleRepository.create({
       productId,
-      startDate,
-      endDate,
+      startDate: startDateStr,
+      endDate: endDateStr,
       auditCreatedBy: audit.auditCreatedBy,
       auditCreatedDateTime: audit.auditCreatedDateTime,
     });
@@ -76,9 +83,16 @@ export class FlashSalesService implements IFlashSalesService {
    *
    * @returns A Result object containing an array of all flash sales.
    */
-  async findAll(): Promise<Result<FlashSale[]>> {
-    // We could implement pagination here but for the sake of this exercise. We return all
-    const flashSales: FlashSale[] = await this.flashSaleRepository.find();
+  async find(): Promise<Result<FlashSale[] | null>> {
+    // We would be making the assumption that there will only be one event, or return only the latest event
+    const flashSales: FlashSale[] | null = await this.flashSaleRepository.find({
+      relations: {
+        product: true,
+      },
+      order: { auditCreatedDateTime: { direction: 'DESC' } },
+      take: 1,
+    });
+    console.log(flashSales);
     return Result.ok(flashSales);
   }
 

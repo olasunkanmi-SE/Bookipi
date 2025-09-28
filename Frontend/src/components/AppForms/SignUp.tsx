@@ -8,6 +8,7 @@ import { FormInput } from "../Form/form-input";
 import { useAuth } from "../../hooks/useAuth";
 import { Link, Navigate } from "react-router-dom";
 import styled from "styled-components";
+import { useState } from "react";
 
 const StyledLink = styled(Link)`
   display: block;
@@ -48,13 +49,31 @@ type validationSchema = z.infer<typeof validateInputSchema>;
 
 export const AuthForm = () => {
   const { signUp, error, isAuthenticated } = useAuth();
+  const [localError, setLocalError] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<validationSchema>({ resolver: zodResolver(validateInputSchema) });
 
-  const onSubmit: SubmitHandler<validationSchema> = (data) => signUp(data);
+  if (isAuthenticated) {
+    return <Navigate to="/" />;
+  }
+
+  const onSubmit: SubmitHandler<validationSchema> = (data) => {
+    try {
+      signUp(data);
+      if (isAuthenticated) {
+        return <Navigate to="/" />;
+      }
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message ||
+        "sign up failed. Please check your credentials.";
+      setLocalError(message);
+    }
+  };
   if (isAuthenticated) {
     return <Navigate to="/" />;
   }

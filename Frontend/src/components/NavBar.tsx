@@ -36,7 +36,7 @@ export const NavBar = () => {
               ""
             )}
             {isAuthenticated ? (
-              <NavDropdown title="menu" id="basic-nav-dropdown">
+              <NavDropdown title={currentUser.username} id="basic-nav-dropdown">
                 <NavDropdown.Item href="">Events</NavDropdown.Item>
                 <NavDropdown.Item onClick={handleLogOut}>
                   Log out

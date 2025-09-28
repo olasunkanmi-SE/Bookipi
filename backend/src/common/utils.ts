@@ -23,7 +23,10 @@ export const parseAndValidateDates = (startDate: string, endDate: string) => {
     const startDateObj = new Date(startDate);
     startDateObj.setHours(0, 0, 0, 0);
     const startTime = startDateObj.getTime();
-    const endTime = new Date(endDate).getTime();
+
+    const endDateObj = new Date(endDate);
+    endDateObj.setHours(23, 59, 59, 999);
+    const endTime = endDateObj.getTime();
 
     const currentTime = Date.now();
 
