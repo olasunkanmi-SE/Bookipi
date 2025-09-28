@@ -33,7 +33,7 @@ export class OrderProcessor {
         await queryRunner.commitTransaction();
         return;
       }
-      const { userId, productId, username } = job.data;
+      const { userId, productId, email } = job.data;
       const product: Product = await this.productService.findOne(productId);
 
       if (product.stock < OrderQueueConstants.DECREMENT_COUNT) {
@@ -52,7 +52,7 @@ export class OrderProcessor {
       // Creating an order can be made after payment or other business rules have been checked
       const order = await this.orderService.create(
         { productId, idempotencyKey },
-        { sub: userId, username },
+        { sub: userId, email },
         OrderStatus.SUCCESS,
       );
 

@@ -90,7 +90,7 @@ export class OrdersService implements IOrderService {
       const jobPayload: IOrderJobPayload = {
         userId: user.sub,
         productId: createOrderDto.productId,
-        username: user.username,
+        email: user.email,
       };
       const job = await this.orderQueue.add(
         OrderQueueConstants.CREATE_ORDER_JOB,
@@ -137,7 +137,7 @@ export class OrdersService implements IOrderService {
     await this.getUserAndProduct(user.sub, productId);
 
     const audit = Audit.create({
-      auditCreatedBy: user.username,
+      auditCreatedBy: user.email,
       auditCreatedDateTime: new Date().toISOString(),
     });
 

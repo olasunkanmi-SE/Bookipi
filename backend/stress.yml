@@ -8,7 +8,7 @@ config:
   payload:
     path: "./script/users.csv"
     fields:
-      - "username"
+      - "email"
       - "password"
   
   # REVISED: Switched to a multi-phase approach for more insightful results.
@@ -30,20 +30,20 @@ scenarios:
     flow:
       # Step 1: Create a new user account.
       # This step must come first, as a user cannot sign in before they exist.
-      # - post:
-      #     url: "/users/create"
-      #     json:
-      #       username: "{{ username }}"
-      #       password: "{{ password }}"
-      #     # We expect a 201 (Created) status for a successful registration.
-      #     expect:
-      #       - statusCode: 201
+      - post:
+          url: "/users/create"
+          json:
+            email: "{{ email }}"
+            password: "{{ password }}"
+          # We expect a 201 (Created) status for a successful registration.
+          expect:
+            - statusCode: 201
 
       # Step 2: Login with the newly created credentials.
       - post:
           url: "/users/signin"
           json:
-            username: "{{ username }}"
+            email: "{{ email }}"
             password: "{{ password }}"
           capture:
             - json: "$.data.accessToken"
