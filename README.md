@@ -285,7 +285,6 @@ Bookipi/
 - `GET /orders` - List user orders
 - `GET /orders/:id` - Get order details
 
-## Testing
 
 ### Backend Tests
 
