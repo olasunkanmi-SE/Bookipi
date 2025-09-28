@@ -43,7 +43,7 @@ export class UsersService {
   ): Promise<Result<ICreateUserResponseDTO>> {
     try {
       const { email, password, username } = createUserDto;
-      const existingUser = await this.getUserByName(email);
+      const existingUser = await this.getUserByEmail(email);
       if (existingUser) {
         throw new BadRequestException('User already exists');
       }
@@ -77,7 +77,7 @@ export class UsersService {
   ): Promise<Result<{ accessToken: string }>> {
     try {
       const { email, password } = createUserDto;
-      const user = await this.getUserByName(email);
+      const user = await this.getUserByEmail(email);
 
       if (!user) {
         throw new UnauthorizedException('User does not exist');
@@ -107,7 +107,7 @@ export class UsersService {
     }
   }
 
-  async getUserByName(email: string): Promise<User | null> {
+  async getUserByEmail(email: string): Promise<User | null> {
     const user = await this.userRepository.findOne({
       where: { email },
     });
