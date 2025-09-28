@@ -12,10 +12,12 @@ import { OrderQueueConstants, TYPES } from 'src/common/constants';
 import { CacheService } from 'src/infrastructure/cache/redis.service';
 import { RedisCacheModule } from 'src/infrastructure/cache/redis.module';
 import { OrderProcessor } from './order.processor';
+import { FlashSalesService } from 'src/fash-sales/flash-sales.service';
+import { FlashSale } from 'src/infrastructure/data-access/models/flash-sales.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Order, Product, User]),
+    TypeOrmModule.forFeature([Order, Product, User, FlashSale]),
     BullModule.registerQueue({ name: OrderQueueConstants.QUEUE_NAME }),
     RedisCacheModule,
   ],
@@ -26,6 +28,7 @@ import { OrderProcessor } from './order.processor';
     { provide: TYPES.IRedisService, useClass: CacheService },
     { provide: TYPES.IProductService, useClass: ProductsService },
     { provide: TYPES.IOrderService, useClass: OrdersService },
+    { provide: TYPES.IFlashSalesService, useClass: FlashSalesService },
     OrderProcessor,
   ],
 })

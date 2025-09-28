@@ -126,7 +126,7 @@ export class FlashSalesService implements IFlashSalesService {
 
     if (!flashSale) {
       throw new NotFoundException(
-        `Flash sale with ID "${productId}" not found.`,
+        `Flash sale for product with id "${productId}" not found.`,
       );
     }
 
@@ -158,7 +158,7 @@ export class FlashSalesService implements IFlashSalesService {
     }
 
     const flashSale = await this.flashSaleRepository.findOne({
-      where: { id: productId },
+      where: { productId: productId },
     });
 
     if (flashSale) {

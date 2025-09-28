@@ -1,5 +1,6 @@
 import { createContext, useEffect, useState } from "react";
 import { useMutation, useQueryClient } from "react-query";
+import { useNavigate } from "react-router-dom";
 import { Login, Register } from "../apis/usersApi";
 import { ICreateUser, IUser } from "../interfaces/user.interface";
 import {
@@ -7,7 +8,6 @@ import {
   getDecryptedLocalStorage,
   setEncryptedLocalStorage,
 } from "../utility/utility";
-import { useNavigate } from "react-router-dom";
 
 type AuthenticationProviderProps = {
   children: React.ReactNode;
@@ -15,12 +15,14 @@ type AuthenticationProviderProps = {
 
 export type AuthenticationProps = {
   currentUser: IUser;
-  signUp: (user: ICreateUser) => void;
-  login: (user: Omit<ICreateUser, "username">) => void;
+
+  signUp: (user: ICreateUser) => Promise<void>;
+  login: (user: Omit<ICreateUser, "username">) => Promise<void>;
   error: any;
   isAuthenticated: boolean;
   logOut: () => void;
 };
+
 export const AuthContext = createContext({} as AuthenticationProps);
 
 export const AuthProvider = ({ children }: AuthenticationProviderProps) => {
@@ -31,24 +33,20 @@ export const AuthProvider = ({ children }: AuthenticationProviderProps) => {
   );
 
   const [error, setError] = useState<any>();
-
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   useEffect(() => {
     const getCurrentUser = getDecryptedLocalStorage("user", true);
     if (getCurrentUser) {
       const savedUser = JSON.parse(getCurrentUser);
-      if (Object.keys(savedUser).length) {
+      if (Object.keys(savedUser).length > 0) {
         setCurrentUser(savedUser);
-      }
-      if (currentUser) {
         setIsAuthenticated(true);
       }
     }
   }, []);
 
   const queryClient = useQueryClient();
-
   const navigate = useNavigate();
 
   const signUpMutation = useMutation(Register, {
@@ -56,33 +54,42 @@ export const AuthProvider = ({ children }: AuthenticationProviderProps) => {
       queryClient.invalidateQueries("user");
       navigate("/login");
     },
-    onError: (error: any) => {
-      setError(error.response.data.message);
-    },
   });
 
-  const signUp = (user: ICreateUser) => {
-    signUpMutation.mutate(user);
+  const signUp = async (user: ICreateUser) => {
+    try {
+      setError(null);
+      await signUpMutation.mutateAsync(user);
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message || "An unknown error occurred";
+      setError(errorMessage);
+      throw err;
+    }
   };
 
   const loginMutation = useMutation(Login, {
     onSuccess: (data) => {
       queryClient.invalidateQueries("users");
       setCurrentUser(data);
-      if (currentUser) {
+      if (data) {
         setIsAuthenticated(true);
         setEncryptedLocalStorage("user", JSON.stringify(data), true);
         navigate("/");
       }
     },
-    onError: (error: any) => {
-      console.log(error.response.data.message);
-      setError(error.response.data.message);
-    },
   });
 
-  const login = (user: Omit<ICreateUser, "username">) => {
-    loginMutation.mutate(user);
+  const login = async (user: Omit<ICreateUser, "username">) => {
+    try {
+      setError(null);
+      await loginMutation.mutateAsync(user);
+    } catch (err: any) {
+      console.log(err);
+      const errorMessage = err.response?.data?.details || "Invalid credentials";
+      setError(errorMessage);
+      throw err;
+    }
   };
 
   const logOut = () => {
@@ -90,6 +97,7 @@ export const AuthProvider = ({ children }: AuthenticationProviderProps) => {
     clearStorage();
     navigate("/login");
   };
+
   const value = {
     currentUser,
     signUp,
@@ -98,5 +106,6 @@ export const AuthProvider = ({ children }: AuthenticationProviderProps) => {
     isAuthenticated,
     logOut,
   };
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

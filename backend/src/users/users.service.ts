@@ -80,7 +80,7 @@ export class UsersService {
       const user = await this.getUserByEmail(email);
 
       if (!user) {
-        throw new UnauthorizedException('User does not exist');
+        throw new UnauthorizedException('Invalid email or password');
       }
 
       const validatePassword = await this.authService.verifyPassword(

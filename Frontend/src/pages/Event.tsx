@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Card, Button, ProgressBar, Badge } from "react-bootstrap";
+import { Card, Button, Badge } from "react-bootstrap";
 import styled from "styled-components";
 
 interface FlashSaleProductProps {
@@ -126,12 +126,6 @@ const Event: React.FC<FlashSaleProductProps> = ({ product, onBuy }) => {
             ? `${product.stockQuantity} left in stock`
             : "Out of stock"}
         </Card.Text>
-
-        <ProgressBar
-          now={soldOutPercentage}
-          variant={soldOutPercentage > 70 ? "danger" : "warning"}
-          className="mb-3"
-        />
 
         <Button
           variant="warning"

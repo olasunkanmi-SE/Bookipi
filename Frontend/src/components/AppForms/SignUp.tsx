@@ -6,7 +6,21 @@ import { z } from "zod";
 import { Alert, Card } from "react-bootstrap";
 import { FormInput } from "../Form/form-input";
 import { useAuth } from "../../hooks/useAuth";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
+import styled from "styled-components";
+
+const StyledLink = styled(Link)`
+  display: block;
+  text-align: center;
+  margin-top: 1rem;
+  color: #0d6efd;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    cursor: pointer;
+  }
+`;
 
 export type RegisterFormProps = {
   email: string;
@@ -93,6 +107,9 @@ export const AuthForm = () => {
             <Button className="w-100" variant="primary" type="submit">
               Submit
             </Button>
+            <StyledLink to="/login">
+              <small>Login</small>
+            </StyledLink>
           </Form>
         </Card.Body>
       </Card>

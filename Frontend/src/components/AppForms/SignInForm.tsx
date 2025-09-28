@@ -1,10 +1,26 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Alert, Button, Card, Form } from "react-bootstrap";
 import { SubmitHandler, useForm } from "react-hook-form";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useAuth } from "../../hooks/useAuth";
 import { FormInput } from "../Form/form-input";
+import { useState } from "react";
+import styled from "styled-components";
+
+const StyledLink = styled(Link)`
+  display: block;
+  text-align: center;
+  margin-top: 1rem;
+  color: #0d6efd;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+    cursor: pointer;
+  }
+`;
 
 export type loginFormProps = {
   email: string;
@@ -21,6 +37,8 @@ type validationSchema = z.infer<typeof validateInputSchema>;
 export const LoginForm = () => {
   const { login, error, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [localError, setLocalError] = useState<string | null>(null);
+
   const {
     register,
     handleSubmit,
@@ -31,9 +49,16 @@ export const LoginForm = () => {
   }
 
   const onSubmit: SubmitHandler<validationSchema> = (data) => {
-    login(data);
-    if (isAuthenticated) {
-      navigate("/events");
+    try {
+      login(data);
+      if (isAuthenticated) {
+        navigate("/events");
+      }
+    } catch (error: any) {
+      const message =
+        error.response?.data?.message ||
+        "Login failed. Please check your credentials.";
+      setLocalError(message);
     }
   };
 
@@ -70,7 +95,13 @@ export const LoginForm = () => {
             <Button className="w-100" variant="primary" type="submit">
               Submit
             </Button>
+            <StyledLink to="/register">
+              <small>Register</small>
+            </StyledLink>
           </Form>
+          <div>
+            {localError && <p style={{ color: "red" }}>{localError}</p>}
+          </div>
         </Card.Body>
       </Card>
     </div>

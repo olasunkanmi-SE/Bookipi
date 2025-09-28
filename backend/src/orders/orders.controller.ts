@@ -5,13 +5,14 @@ import { CreateOrderDto } from './dto/create-order.dto';
 import { OrdersService } from './orders.service';
 import { IOrderQueue } from './interface/order';
 import { Result } from 'src/common/result';
+import { FlashSaleGuard } from 'src/infrastructure/guards/flash.sale';
 
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Post('create')
-  @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard, FlashSaleGuard)
   async create(
     @Body() createOrderDto: CreateOrderDto,
     @Req() req: Request,

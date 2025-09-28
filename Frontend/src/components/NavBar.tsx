@@ -12,13 +12,10 @@ export const NavBar = () => {
       <Navbar bg="light" expand="lg">
         <Container>
           <Navbar.Brand to="/events" as={NavLink}>
-            Events
+            Flash Sale
           </Navbar.Brand>
           <Nav className="me-auto"></Nav>
           <Stack gap={3} direction="horizontal">
-            <Nav.Link to="/events/drafts" as={NavLink}>
-              Drafts
-            </Nav.Link>
             {!isAuthenticated ? (
               <Nav.Link
                 to="/register"
@@ -39,10 +36,7 @@ export const NavBar = () => {
               ""
             )}
             {isAuthenticated ? (
-              <NavDropdown
-                title={currentUser?.username}
-                id="basic-nav-dropdown"
-              >
+              <NavDropdown title="menu" id="basic-nav-dropdown">
                 <NavDropdown.Item href="">Events</NavDropdown.Item>
                 <NavDropdown.Item onClick={handleLogOut}>
                   Log out

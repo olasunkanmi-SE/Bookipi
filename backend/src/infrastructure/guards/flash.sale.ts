@@ -11,7 +11,8 @@ export class FlashSaleGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<Request>();
-    const productId = request.params.id;
+    const body = request.body as { productId: string };
+    const productId = body.productId;
     await this.flashSalesService.validateActiveFlashSale(productId);
     return true;
   }

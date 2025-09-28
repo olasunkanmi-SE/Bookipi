@@ -1,8 +1,16 @@
 // Example usage
 import Event from "./Event";
 import { Container, Row } from "react-bootstrap";
+import { useAuth } from "../hooks/useAuth";
+import { Navigate } from "react-router-dom";
+import { NavBar } from "../components/NavBar";
 
 export const Product = () => {
+  const { isAuthenticated, currentUser } = useAuth();
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+
   const sampleProduct = {
     id: "1",
     name: "Wireless Noise-Cancelling Headphones",
@@ -11,7 +19,7 @@ export const Product = () => {
     imageUrl:
       "https://cdn.thewirecutter.com/wp-content/media/2023/09/noise-cancelling-headphone-2048px-0876.jpg?auto=webp&quality=75&width=1024&dpr=2",
     description: "Premium wireless headphones with active noise cancellation",
-    stockQuantity: 15,
+    stockQuantity: 1,
     endTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
   };
 
@@ -21,6 +29,7 @@ export const Product = () => {
 
   return (
     <Container>
+      <NavBar />
       <Row className="justify-content-center">
         <Event product={sampleProduct} onBuy={handleBuy} />
       </Row>
