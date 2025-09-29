@@ -286,15 +286,6 @@ Bookipi/
 - `GET /orders/:id` - Get order details
 
 
-### Backend Tests
-
-```bash
-cd backend
-npm run test          # Unit tests
-npm run test:e2e      # End-to-end tests
-npm run test:cov      # Test coverage
-```
-
 ### Frontend Tests
 
 ```bash
